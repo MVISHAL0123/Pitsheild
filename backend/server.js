@@ -10,53 +10,33 @@ const connectDB = require("./config/db");
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://pitshield.vercel.app",
-  "https://pitshield-admin.vercel.app",
-];
+// Connect to MongoDB
+connectDB();
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests without an Origin header
-    // (Postman, server-to-server, etc.)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-app.use(cors(corsOptions));
-
-// Explicitly handle browser preflight requests
-app.options(/.*/, cors(corsOptions));
-
+// Middleware
 app.use(helmet());
 app.use(compression());
 
-app.use(express.json({ limit: "10kb" }));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://pitshield.vercel.app",
+      "https://pitshield-admin.vercel.app",
+    ],
+    credentials: true,
+  })
+);
 
-// Connect MongoDB
-connectDB();
+app.use(express.json({ limit: "10kb" }));
 
 // Request timeout
 app.use((req, res, next) => {
   res.setTimeout(15000, () => {
-    if (!res.headersSent) {
-      res.status(408).json({
-        success: false,
-        message: "Request timed out",
-      });
-    }
+    res.status(408).json({
+      success: false,
+      message: "Request timed out",
+    });
   });
 
   next();
@@ -78,11 +58,12 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// API routes
+// API Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/potholes", require("./routes/potholeRoutes"));
 app.use("/api/teams", require("./routes/teamRoutes"));
 
+// Export app for Vercel
 module.exports = app;
 
 // Local development
@@ -90,6 +71,8 @@ if (require.main === module) {
   const PORT = process.env.PORT || 5000;
 
   app.listen(PORT, () => {
-    console.log(`PitShield Backend running on http://localhost:${PORT}`);
+    console.log(
+      `PitShield Backend running on http://localhost:${PORT}`
+    );
   });
 }
