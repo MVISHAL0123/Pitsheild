@@ -4,7 +4,8 @@ const seedUsers = async () => {
   const User = require("../models/User");
 
   const count = await User.countDocuments();
-  if (count > 0) return; // Users already exist
+
+  if (count > 0) return;
 
   const defaultUsers = [
     {
@@ -31,19 +32,28 @@ const seedUsers = async () => {
   ];
 
   await User.create(defaultUsers);
+
   console.log("Default users seeded successfully");
 };
 
 const connectDB = async () => {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI is not defined");
+    }
+
+    if (mongoose.connection.readyState === 1) {
+      return;
+    }
+
     await mongoose.connect(process.env.MONGODB_URI);
+
     console.log("MongoDB Connected Successfully");
 
-    // Seed default users if none exist
     await seedUsers();
   } catch (error) {
     console.error("MongoDB Connection Failed:", error.message);
-    process.exit(1);
+    throw error;
   }
 };
 
