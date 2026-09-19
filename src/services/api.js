@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://backend-five-rosy-66.vercel.app/api";
 
 // Helper: fetch with timeout
 const fetchWithTimeout = async (url, options = {}, timeoutMs = 8000) => {
